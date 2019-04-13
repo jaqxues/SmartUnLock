@@ -12,6 +12,21 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (!xposedModuleActive()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Module not active")
+                    .setMessage("This Xposed Module is not activated in the Xposed Installer. If you are experiencing this issue, and the module is active, make sure the Xposed Framework is installed correctly and works. Remember to perform a reboot after activating a module")
+                    .setCancelable(false)
+                    .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            finish();
+                        }
+                    }).show();
+            return;
+        }
+
         if (!getIntent().hasExtra("isActive")) {
             Intent intent = new Intent(Layer.RELAUNCH_WITH_BOOLEAN_EXTRA_ACTION);
             sendBroadcast(intent);
@@ -58,5 +73,9 @@ public class MainActivity extends Activity {
     private void toggle() {
         Intent intent = new Intent(Layer.ACTIVATED_SMARTUNLOCK_ACTION);
         sendBroadcast(intent);
+    }
+
+    private static boolean xposedModuleActive() {
+        return false;
     }
 }
