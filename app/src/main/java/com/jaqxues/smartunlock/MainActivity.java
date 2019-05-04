@@ -28,7 +28,7 @@ public class MainActivity extends Activity {
         }
 
         if (!getIntent().hasExtra("isActive")) {
-            Intent intent = new Intent(Layer.RELAUNCH_WITH_BOOLEAN_EXTRA_ACTION);
+            Intent intent = new Intent(InterLayer.RELAUNCH_WITH_BOOLEAN_EXTRA_ACTION);
             sendBroadcast(intent);
             finish();
             return;
@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
     }
 
     private void toggle() {
-        Intent intent = new Intent(Layer.ACTIVATED_SMARTUNLOCK_ACTION);
+        Intent intent = new Intent(InterLayer.TOGGLE_SMARTUNLOCK_ACTION);
         sendBroadcast(intent);
     }
 
