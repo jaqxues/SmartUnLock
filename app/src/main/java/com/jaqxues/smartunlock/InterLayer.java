@@ -15,8 +15,13 @@ import de.robv.android.xposed.XposedHelpers;
  * this, we use this class that does not implement an at runtime unknown interface.
  */
 public class InterLayer {
-    public static final String TOGGLE_SMARTUNLOCK_ACTION = "smartunlock.intent.action.toggle_mode";
-    public static final String RELAUNCH_WITH_BOOLEAN_EXTRA_ACTION = "smartunlock.intent.action.relaunch_with_bool";
+    public static final String REQUEST_TOGGLE_ACTION_ACTIVITY = "smartunlock.intent.action.toggle_mode.activity";
+    public static final String REQUEST_TOGGLE_ACTION_SERVICE = "smartunlock.intent.action.toggle_mode.service";
+    public static final String CALLBACK_BOOLEAN_EXTRA_ACTIVITY_REQUEST = "smartunlock.intent.action.request_relaunch_with_bool.activity";
+    public static final String CALLBACK_BOOLEAN_EXTRA_SERVICE_REQUEST = "smartunlock.intent.action.request_relaunch_with_bool.service";
+    public static final String CALLBACK_BOOLEAN_EXTRA_SERVICE_RESPONSE = "smartunlock.intent.action.response_relaunch_with_bool.service";
+    public static final String CALLBACK_BOOLEAN_EXTRA_SERVICE_FORWARD = "smartunlock.intent.action.forward_relaunch_with_bool.service";
+    public static final String INTENT_EXTRA_IS_ACTIVE = "smartunlock.intent.extra.is_active";
 
     public static final String TRUST_MANAGER_SERVICE_CLASS = "com.android.server.trust.TrustManagerService";
 
@@ -24,14 +29,35 @@ public class InterLayer {
     private static boolean updateTrustAlreadyCalled;
     private static boolean isActive = false;
 
-    private static BroadcastReceiver broadCastReceiver = new BroadcastReceiver() {
+    private static final BroadcastReceiver broadCastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (RELAUNCH_WITH_BOOLEAN_EXTRA_ACTION.equals(intent.getAction())) {
-                launchUI();
-            } else if (TOGGLE_SMARTUNLOCK_ACTION.equals(intent.getAction())) {
-                isActive = !isActive;
-                updateTrustAll();
+            switch (intent.getAction()) {
+                case CALLBACK_BOOLEAN_EXTRA_ACTIVITY_REQUEST:
+                    context.startActivity(
+                            context.getPackageManager().getLaunchIntentForPackage(BuildConfig.APPLICATION_ID)
+                                    .putExtra(INTENT_EXTRA_IS_ACTIVE, isActive));
+                    break;
+                case CALLBACK_BOOLEAN_EXTRA_SERVICE_REQUEST:
+                    context.startActivity(
+                            context.getPackageManager().getLaunchIntentForPackage(BuildConfig.APPLICATION_ID)
+                                    .putExtra(INTENT_EXTRA_IS_ACTIVE, isActive)
+                                    .putExtra(CALLBACK_BOOLEAN_EXTRA_SERVICE_FORWARD, true));
+                    break;
+                case REQUEST_TOGGLE_ACTION_ACTIVITY:
+                    isActive = !isActive;
+                    updateTrustAll();
+                    break;
+                case REQUEST_TOGGLE_ACTION_SERVICE:
+                    isActive = !isActive;
+                    updateTrustAll();
+                    context.startActivity(
+                            context.getPackageManager().getLaunchIntentForPackage(BuildConfig.APPLICATION_ID)
+                                    .putExtra(INTENT_EXTRA_IS_ACTIVE, isActive)
+                                    .putExtra(CALLBACK_BOOLEAN_EXTRA_SERVICE_FORWARD, true));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown Intent Action");
             }
         }
     };
@@ -46,8 +72,10 @@ public class InterLayer {
                         trustManager = param.thisObject;
 
                         IntentFilter intentFilter = new IntentFilter();
-                        intentFilter.addAction(TOGGLE_SMARTUNLOCK_ACTION);
-                        intentFilter.addAction(RELAUNCH_WITH_BOOLEAN_EXTRA_ACTION);
+                        intentFilter.addAction(CALLBACK_BOOLEAN_EXTRA_ACTIVITY_REQUEST);
+                        intentFilter.addAction(CALLBACK_BOOLEAN_EXTRA_SERVICE_REQUEST);
+                        intentFilter.addAction(REQUEST_TOGGLE_ACTION_ACTIVITY);
+                        intentFilter.addAction(REQUEST_TOGGLE_ACTION_SERVICE);
                         ((Context) XposedHelpers.getObjectField(trustManager, "mContext"))
                                 .registerReceiver(broadCastReceiver, intentFilter);
                     }
@@ -124,12 +152,5 @@ public class InterLayer {
         } catch (Throwable t) {
             XposedBridge.log(t);
         }
-    }
-
-    private static void launchUI() {
-        Context context = (Context) XposedHelpers.getObjectField(trustManager, "mContext");
-        context.startActivity(
-                context.getPackageManager().getLaunchIntentForPackage(BuildConfig.APPLICATION_ID)
-                        .putExtra("isActive", isActive));
     }
 }

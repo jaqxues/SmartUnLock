@@ -28,6 +28,19 @@
         <meta-data
             android:name="xposedminversion"
             android:value="50" />
+
+        <service
+            android:name=".QsTileService"
+            android:label="SmartUnlock"
+            android:exported="true"
+            android:enabled="true"
+            android:icon="@drawable/ic_lock_open_black_24dp"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data android:name="android.service.quicksettings.ACTIVE_TILE" android:value="true" />
+        </service>
     </application>
 
 </manifest>

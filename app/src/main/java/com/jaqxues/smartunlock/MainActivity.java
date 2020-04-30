@@ -27,8 +27,18 @@ public class MainActivity extends Activity {
             return;
         }
 
-        if (!getIntent().hasExtra("isActive")) {
-            Intent intent = new Intent(InterLayer.RELAUNCH_WITH_BOOLEAN_EXTRA_ACTION);
+        if (!getIntent().hasExtra(InterLayer.INTENT_EXTRA_IS_ACTIVE)) {
+            Intent intent = new Intent(InterLayer.CALLBACK_BOOLEAN_EXTRA_ACTIVITY_REQUEST);
+            sendBroadcast(intent);
+            finish();
+            return;
+        }
+
+        boolean isActive = getIntent().getExtras().getBoolean(InterLayer.INTENT_EXTRA_IS_ACTIVE);
+
+        if (getIntent().getBooleanExtra(InterLayer.CALLBACK_BOOLEAN_EXTRA_SERVICE_FORWARD, false)) {
+            Intent intent = new Intent(InterLayer.CALLBACK_BOOLEAN_EXTRA_SERVICE_RESPONSE);
+            intent.putExtra(InterLayer.INTENT_EXTRA_IS_ACTIVE, isActive);
             sendBroadcast(intent);
             finish();
             return;
@@ -44,7 +54,7 @@ public class MainActivity extends Activity {
                     }
                 });
 
-        if (getIntent().getBooleanExtra("isActive", false)) {
+        if (isActive) {
             builder
                     .setTitle("Disable" + "SmartUnLock")
                     .setMessage("This will disable SmartUnLock: A Password / Pin / biometric Authentication will be needed again to unlock your phone.")
@@ -71,7 +81,7 @@ public class MainActivity extends Activity {
     }
 
     private void toggle() {
-        Intent intent = new Intent(InterLayer.TOGGLE_SMARTUNLOCK_ACTION);
+        Intent intent = new Intent(InterLayer.REQUEST_TOGGLE_ACTION_ACTIVITY);
         sendBroadcast(intent);
     }
 
