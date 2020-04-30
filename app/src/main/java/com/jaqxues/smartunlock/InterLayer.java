@@ -4,9 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
-import android.view.KeyEvent;
-
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
@@ -22,8 +19,6 @@ public class InterLayer {
     public static final String RELAUNCH_WITH_BOOLEAN_EXTRA_ACTION = "smartunlock.intent.action.relaunch_with_bool";
 
     public static final String TRUST_MANAGER_SERVICE_CLASS = "com.android.server.trust.TrustManagerService";
-    public static final String PHONE_WINDOW_MANAGER_CLASS = (Build.VERSION.SDK_INT > 22) ?
-            "com.android.server.policy.PhoneWindowManager" : "com.android.internal.policy.impl.PhoneWindowManager";
 
     private static Object trustManager;
     private static boolean updateTrustAlreadyCalled;
@@ -34,7 +29,6 @@ public class InterLayer {
         public void onReceive(Context context, Intent intent) {
             if (RELAUNCH_WITH_BOOLEAN_EXTRA_ACTION.equals(intent.getAction())) {
                 launchUI();
-                return;
             } else if (TOGGLE_SMARTUNLOCK_ACTION.equals(intent.getAction())) {
                 isActive = !isActive;
                 updateTrustAll();
@@ -101,25 +95,6 @@ public class InterLayer {
                         if (!isTrustAllowedForUser((int) param.args[0]))
                             XposedBridge.log("User not (yet) allowed to use Trust Manager");
                         else param.setResult(true);
-                    }
-                });
-    }
-
-    static void hookWindowManager(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod(PHONE_WINDOW_MANAGER_CLASS, classLoader,
-                "interceptKeyBeforeDispatching",
-                "android.view.WindowManagerPolicy.WindowState",
-                KeyEvent.class, int.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(final MethodHookParam param) throws Throwable {
-                        KeyEvent keyEvent = (KeyEvent) param.args[1];
-                        if (keyEvent.getScanCode() == 96 &&
-                                keyEvent.getAction() == KeyEvent.ACTION_DOWN &&
-                                keyEvent.getRepeatCount() == 50) {
-                            XposedBridge.log("Matched Activation Conditions");
-                            launchUI();
-                        }
                     }
                 });
     }

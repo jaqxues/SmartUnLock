@@ -16,7 +16,6 @@ public class XposedManager implements IXposedHookLoadPackage {
             XposedBridge.log("Initializing Android: Starting TrustedManagerService Hooks");
             try {
                 InterLayer.hookTrustManager(lpparam.classLoader);
-                InterLayer.hookWindowManager(lpparam.classLoader);
             } catch (Throwable t) {
                 XposedBridge.log(t);
             }
